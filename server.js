@@ -1,38 +1,26 @@
-var http = require('http')
+var express = require('express')
+var bodyParser = require('body-parser')
 
 var messages = [{ message: 'You are awesome', timestamp: new Date() }]
+var app = express()
 
-var server = http.createServer(function (req, res) {
-  if (req.method === 'GET') {
-    res.writeHead(200, {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    })
-    res.end(JSON.stringify(messages))
-  } else if (req.method === 'POST') {
-    var newMsg = ''
-    req.on('data', function (data) {
-      newMsg += data
-    })
-    req.on('end', function () {
-      newMsg = JSON.parse(newMsg)
-      newMsg.timestamp = new Date()
-      messages.push(newMsg)
-      res.writeHead(201, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      })
-      res.end(JSON.stringify(messages))
-    })
-  } else if (req.method === 'OPTIONS') {
-    res.writeHead(200, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'OPTIONS, GET, POST',
-      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
-    })
-    res.end()
-
-  }
+app.use(bodyParser())
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST')
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  next()
 })
 
-server.listen(3000)
+app.get('/', function (req, res) {
+  res.json(200, messages)
+})
+
+app.post('/', function (req, res) {
+  var newMsg = req.body
+  newMsg.timestamp = new Date()
+  messages.push(newMsg)
+  res.json(201, messages)
+})
+
+app.listen(3000)
